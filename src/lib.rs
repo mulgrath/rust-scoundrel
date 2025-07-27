@@ -91,9 +91,16 @@ impl Deck {
     fn new() -> Deck {
         let mut cards: Vec<Card> = Vec::with_capacity(52);
 
-        for &suit in &[Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades] {
+        for &suit in &[Suit::Clubs, Suit::Spades] {
             for &rank in &[Rank::Ace, Rank::King, Rank::Queen, Rank::Jack, Rank::Ten, Rank::Nine,
-                Rank::Eight, Rank::Seven, Rank::Six, Rank::Five, Rank::Four, Rank::Three, Rank::Two] {
+                                Rank::Eight, Rank::Seven, Rank::Six, Rank::Five, Rank::Four, Rank::Three, Rank::Two] {
+                cards.push(Card::new(suit, rank));
+            }
+        }
+
+        // Scoundrel rules dictate that we exclude the red faces and Aces from the deck
+        for &suit in &[Suit::Diamonds, Suit::Hearts] {
+            for &rank in &[Rank::Two, Rank::Three, Rank::Four, Rank::Five, Rank::Six, Rank::Seven, Rank::Eight, Rank::Nine, Rank::Ten] {
                 cards.push(Card::new(suit, rank));
             }
         }
@@ -112,13 +119,43 @@ impl Deck {
     }
 }
 
-pub fn run_game() {
-    let mut _deck = create_deck();
+struct PlayerState {
+    health: i32,
+    attack: i32,
+    defense: i32,
 }
 
-fn create_deck() -> Deck {
-    let mut deck = Deck::new();
-    deck.shuffle();
-    deck.print_deck();
-    deck
+impl PlayerState {
+    fn new(health: i32, attack: i32, defense: i32) -> PlayerState {
+        PlayerState {health, attack, defense}
+    }
+
+    fn print_player(&self) {
+        println!("Health: {}, Attack: {}, Defense: {}", self.health, self.attack, self.defense);
+    }
+}
+
+struct GameState {
+    player: PlayerState,
+    deck: Deck,
+}
+
+impl GameState {
+    fn new() -> GameState {
+        let player = PlayerState::new(20, 0, 0);
+        let deck = Deck::new();
+        GameState { player, deck }
+    }
+
+    fn shuffle_deck(&mut self) {
+        self.deck.shuffle();
+    }
+}
+
+pub fn run_game() {
+    let mut game_state = GameState::new();
+
+    game_state.shuffle_deck();
+    game_state.deck.print_deck();
+    game_state.player.print_player();
 }
