@@ -2,6 +2,7 @@ use crate::deck::Deck;
 use crate::player::{PlayerAction, PlayerState};
 use crate::card::{Suit};
 use std::io::{self, Write};
+use std::cmp;
 
 pub struct GameState {
     player: PlayerState,
@@ -41,7 +42,7 @@ impl GameState {
                   println!("{}. Fight Monster ({val} Combat Power)", choice_num+1);
                 },
                 PlayerAction::DrinkPotion(val) => {
-                    let mut restore_amt = 20 - ((*val) + self.player.health());
+                    let mut restore_amt = cmp::min(20 - ((*val) + self.player.health()), *val);
                     if restore_amt <=  0 {
                         restore_amt = *val + restore_amt;
                     }
@@ -83,7 +84,7 @@ impl GameState {
             io::stdout().flush().expect("Failed to flush stdout");
 
             let mut input = String::new();
-            io::stdin().read_line(&mut input).expect("Failed to read input");
+            io::stdin().read_line(&mut input).expect("Failed to read input");;
 
             match input.trim().parse::<usize>() {
                 Ok(num) if (min..=max).contains(&num) => return num,
