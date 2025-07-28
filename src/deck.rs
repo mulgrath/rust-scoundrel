@@ -1,7 +1,10 @@
 use crate::card::{Card, Suit, Rank};
+use rand::seq::SliceRandom;
+
 
 pub struct Deck {
     cards: Vec<Card>,
+    room: Vec<Card>,
 }
 
 impl Deck {
@@ -22,16 +25,36 @@ impl Deck {
             }
         }
 
-        Deck {cards}
+        let room = Vec::with_capacity(4);
+        Deck {cards, room}
     }
 
     pub fn shuffle(&mut self) {
+        let mut rng = rand::rng();
+        self.cards.shuffle(&mut rng);
+    }
 
+    pub fn populate_room(&mut self) {
+        // Draw the top 4 cards from the deck and move them to the room
+        self.room = self.cards.drain(self.cards.len() - 4..).collect();
+    }
+
+    pub fn get_room(&self) -> &[Card] {
+        &self.room
     }
 
     pub fn print_deck(&self) {
         for card in &self.cards {
             println!("{}", card);
         }
+        println!("There are {} cards in the deck.", self.cards.len());
+    }
+
+    pub fn print_room(&self) {
+        println!("=== Room ===");
+        for card in &self.room {
+            println!("{}", card);
+        }
+        println!("============");
     }
 }

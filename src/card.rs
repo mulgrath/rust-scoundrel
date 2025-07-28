@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Suit {
     Spades,
     Hearts,
@@ -66,7 +66,7 @@ impl fmt::Display for Rank {
     }
 }
 
-pub(crate) struct Card {
+pub struct Card {
     suit: Suit,
     rank: Rank,
 }
@@ -74,6 +74,14 @@ pub(crate) struct Card {
 impl Card {
     pub fn new(suit: Suit, rank: Rank) -> Card {
         Card { suit, rank }
+    }
+
+    pub fn rank(&self) -> i32 {
+        self.rank as i32
+    }
+
+    pub fn suit(&self) -> Suit {
+        self.suit
     }
 }
 

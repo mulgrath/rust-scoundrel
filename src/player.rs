@@ -12,4 +12,15 @@ impl PlayerState {
     pub fn print_player(&self) {
         println!("Health: {}, Attack: {}, Defense: {}", self.health, self.attack, self.defense);
     }
+
+    pub fn health(&self) -> i32 {
+        self.health
+    }
+}
+
+pub enum PlayerAction {
+    EscapeRoom,
+    EquipWeapon(i32),
+    DrinkPotion(i32),
+    FightMonster(i32),
 }

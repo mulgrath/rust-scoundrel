@@ -8,4 +8,6 @@ pub fn run_game() {
 
     game_state.print_deck();
     game_state.print_player();
+    println!("Game started");
+    game_state.start_turn();
 }
