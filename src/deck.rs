@@ -5,6 +5,7 @@ use rand::seq::SliceRandom;
 pub struct Deck {
     cards: Vec<Card>,
     room: Vec<Card>,
+    room_clear: bool,
 }
 
 impl Deck {
@@ -26,7 +27,11 @@ impl Deck {
         }
 
         let room = Vec::with_capacity(4);
-        Deck {cards, room}
+        Deck {cards, room, room_clear: false}
+    }
+
+    pub fn room_clear(&self) -> bool {
+        self.room_clear
     }
 
     pub fn shuffle(&mut self) {
@@ -37,6 +42,21 @@ impl Deck {
     pub fn populate_room(&mut self) {
         // Draw the top 4 cards from the deck and move them to the room
         self.room = self.cards.drain(self.cards.len() - 4..).collect();
+        self.room_clear = false;
+    }
+
+    pub fn get_deck_size(&self) -> usize {
+        self.cards.len()
+    }
+
+    pub fn escape_room(&mut self) {
+        // Reserve the size of the room to the deck so we avoid repeated reallocations
+        self.cards.reserve(self.room.len());
+        // Shift existing elements of the deck to the right by the room size while also draining
+        // the room of cards.
+        self.cards.splice(0..0, self.room.drain(..));
+        // Set the room status to clear so the turn will end and the new room will be populated.
+        self.room_clear = true;
     }
 
     pub fn get_room(&self) -> &[Card] {

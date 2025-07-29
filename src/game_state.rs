@@ -10,6 +10,7 @@ pub struct GameState {
     final_score: i32,
     player_actions: Vec<PlayerAction>,
     can_escape: bool,
+    escape_cooldown: i32,
 }
 
 impl GameState {
@@ -17,17 +18,32 @@ impl GameState {
         let player = PlayerState::new(20, 20, 0, 0);
         let mut deck = Deck::new();
         deck.shuffle();
-        GameState { player, deck, final_score: 0, player_actions: vec![], can_escape: true }
+        GameState { player, deck, final_score: 0, player_actions: vec![], can_escape: true, escape_cooldown: 0 }
     }
 
     pub fn start_turn(&mut self) {
         self.deck.populate_room();
         self.deck.print_room();
-        // Have player choose to escape the room or select a card...
-        self.process_player_turn();
+        // Have player choose to escape the room or select a card until the room is cleared...
+        while !self.deck.room_clear() {
+            self.process_player_turn();
+        }
+    }
+
+    pub fn game_over(&mut self) -> bool {
+        if (self.player.health() <= 0) {
+            true
+        }
+        else if (self.deck.get_deck_size() == 0) {
+            true
+        }
+        else {
+            false
+        }
     }
 
     fn process_player_turn(&mut self) {
+        self.update_escape_status();
         self.get_available_actions();
         println!("Choose your action...");
         self.print_player_choices();
@@ -112,8 +128,24 @@ impl GameState {
         println!("You entered combat with a monster of combat power {}", val);
     }
 
+    /// Escaping the room can only be done before the player takes any action in the room.
+    /// The escape cooldown is set to 2 so that in the next room when the escape status is checked,
+    /// the counter will be decremented by one, which is still not finished cooling down.
+    /// This prevents the player from escaping two rooms in a row.
     fn escape_room(&mut self) {
         println!("You fled the room...");
+        self.escape_cooldown = 2;
+        self.deck.escape_room();
+    }
+
+    fn update_escape_status(&mut self) {
+        if self.escape_cooldown <= 0 {
+            self.can_escape = true;
+        }
+        else {
+            self.escape_cooldown -= 1;
+            self.can_escape = false;
+        }
     }
 
     pub fn print_deck(&self) {

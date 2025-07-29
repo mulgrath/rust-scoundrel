@@ -37,10 +37,10 @@ impl PlayerState {
     }
 
     pub fn get_potion_heal_amount(&self, val: &i32) -> i32 {
-        let heal = *val;
-        let mut restore_amt = cmp::min(20 - (heal + self.health), heal);
+        let amt = *val;
+        let mut restore_amt = cmp::min(20 - (amt + self.health), amt);
         if restore_amt <=  0 {
-            restore_amt = heal + restore_amt;
+            restore_amt = amt + restore_amt;
         }
         restore_amt
     }
