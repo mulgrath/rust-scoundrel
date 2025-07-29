@@ -14,7 +14,7 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> GameState {
-        let player = PlayerState::new(15, 0, 0);
+        let player = PlayerState::new(20, 20, 0, 0);
         let mut deck = Deck::new();
         deck.shuffle();
         GameState { player, deck, final_score: 0, player_actions: vec![], can_escape: true }
@@ -32,7 +32,22 @@ impl GameState {
         println!("Choose your action...");
         self.print_player_choices();
         let choice = GameState::get_player_choice("Choose your action: ", 1, self.player_actions.len());
-        println!("You chose: {choice}");
+        let chosen_action: &PlayerAction = self.player_actions.get(choice-1).unwrap();
+        match chosen_action {
+            PlayerAction::FightMonster(val) => {
+                self.fight_monster(*val);
+            },
+            PlayerAction::DrinkPotion(val) => {
+                let amt = self.player.get_potion_heal_amount(val);
+                self.player.heal(amt);
+            },
+            PlayerAction::EquipWeapon(val) => {
+                self.player.equip(*val);
+            },
+            PlayerAction::EscapeRoom => {
+                self.escape_room();
+            }
+        }
     }
 
     fn print_player_choices(&self) {
@@ -42,11 +57,8 @@ impl GameState {
                   println!("{}. Fight Monster ({val} Combat Power)", choice_num+1);
                 },
                 PlayerAction::DrinkPotion(val) => {
-                    let mut restore_amt = cmp::min(20 - ((*val) + self.player.health()), *val);
-                    if restore_amt <=  0 {
-                        restore_amt = *val + restore_amt;
-                    }
-                    println!("{}. Drink Potion (+{restore_amt} HP)", choice_num+1)
+                    let amt = self.player.get_potion_heal_amount(val);
+                    println!("{}. Drink Potion (+{amt} HP)", choice_num+1)
                 },
                 PlayerAction::EquipWeapon(val) => {
                     println!("{}. Equip Weapon ({val} Damage)", choice_num+1)
@@ -94,6 +106,14 @@ impl GameState {
                 }
             };
         }
+    }
+
+    fn fight_monster(&mut self, val: i32) {
+        println!("You entered combat with a monster of combat power {}", val);
+    }
+
+    fn escape_room(&mut self) {
+        println!("You fled the room...");
     }
 
     pub fn print_deck(&self) {
