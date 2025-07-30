@@ -21,10 +21,11 @@ impl GameState {
     }
 
     pub fn enter_room(&mut self) {
+        self.update_escape_status();
         self.deck.populate_room();
         self.player.remove_potion_cooldown();
         // Have player choose to escape the room or select a card until the room is cleared...
-        while !self.deck.room_clear() {
+        while !self.deck.room_clear() && self.player.health() > 0 {
             self.deck.print_room();
             self.process_player_turn();
         }
@@ -45,7 +46,6 @@ impl GameState {
     }
 
     fn process_player_turn(&mut self) {
-        self.update_escape_status();
         self.get_available_actions();
         println!("Choose your action...");
         self.print_player_choices();
@@ -54,7 +54,7 @@ impl GameState {
         match chosen_action {
             PlayerAction::FightMonster(val) => {
                 self.can_escape = false;
-                self.fight_monster(*val);
+                self.player.attack_monster(*val);
                 self.deck.remove_card_from_room(choice-1);
             },
             PlayerAction::DrinkPotion(val) => {
@@ -132,17 +132,13 @@ impl GameState {
         }
     }
 
-    fn fight_monster(&mut self, val: i32) {
-        println!("You entered combat with a monster of combat power {}", val);
-    }
-
     /// Escaping the room can only be done before the player takes any action in the room.
     /// The escape cooldown is set to 2 so that in the next room when the escape status is checked,
     /// the counter will be decremented by one, which is still not finished cooling down.
     /// This prevents the player from escaping two rooms in a row.
     fn escape_room(&mut self) {
         println!("You fled the room...");
-        self.escape_cooldown = 2;
+        self.escape_cooldown = 1;
         self.deck.escape_room();
     }
 
