@@ -6,10 +6,11 @@ pub struct Deck {
     cards: Vec<Card>,
     room: Vec<Card>,
     room_clear: bool,
+    room_size: usize,
 }
 
 impl Deck {
-    pub fn new() -> Deck {
+    pub fn new(room_size: usize) -> Deck {
         let mut cards: Vec<Card> = Vec::with_capacity(52);
 
         for &suit in &[Suit::Clubs, Suit::Spades] {
@@ -26,8 +27,8 @@ impl Deck {
             }
         }
 
-        let room = Vec::with_capacity(4);
-        Deck {cards, room, room_clear: false}
+        let room = Vec::with_capacity(room_size);
+        Deck {cards, room, room_clear: false, room_size}
     }
 
     pub fn room_clear(&self) -> bool {
@@ -39,14 +40,34 @@ impl Deck {
         self.cards.shuffle(&mut rng);
     }
 
+    /// Draw the top cards from the deck and move them to the room until it is full
     pub fn populate_room(&mut self) {
-        // Draw the top 4 cards from the deck and move them to the room
-        self.room = self.cards.drain(self.cards.len() - 4..).collect();
+        let num_to_draw = self.room_size.saturating_sub(self.room.len());
+        let to_take = num_to_draw.min(self.cards.len());
+        let start = self.cards.len().saturating_sub(to_take);
+        self.room.extend(self.cards.drain(start..));
         self.room_clear = false;
     }
 
-    pub fn get_deck_size(&self) -> usize {
-        self.cards.len()
+
+    /// Returns true if there are no cards in the room or in the deck.
+    /// Returns false otherwise.
+    pub fn dungeon_cleared(&self) -> bool {
+        self.room.len() == 0 && self.cards.len() == 0
+    }
+
+    pub fn remove_card_from_room(&mut self, idx: usize) {
+        self.room.remove(idx);
+
+        // If the player only has one card left in the room, the room is refilled and the remaining
+        // card stays in the new room.
+        // However, if there are no more cards in the deck, the player must empty the room completely
+        if self.room.len() == 1 && self.cards.len() > 0 {
+            self.room_clear = true;
+        }
+        else if self.room.len() == 0 && self.cards.len() == 0 {
+            self.room_clear = true;
+        }
     }
 
     pub fn escape_room(&mut self) {

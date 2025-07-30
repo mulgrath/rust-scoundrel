@@ -2,7 +2,6 @@ use crate::deck::Deck;
 use crate::player::{PlayerAction, PlayerState};
 use crate::card::{Suit};
 use std::io::{self, Write};
-use std::cmp;
 
 pub struct GameState {
     player: PlayerState,
@@ -15,26 +14,29 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> GameState {
-        let player = PlayerState::new(20, 20, 0, 0);
-        let mut deck = Deck::new();
+        let player = PlayerState::new(20);
+        let mut deck = Deck::new(4);
         deck.shuffle();
         GameState { player, deck, final_score: 0, player_actions: vec![], can_escape: true, escape_cooldown: 0 }
     }
 
-    pub fn start_turn(&mut self) {
+    pub fn enter_room(&mut self) {
         self.deck.populate_room();
-        self.deck.print_room();
+        self.player.remove_potion_cooldown();
         // Have player choose to escape the room or select a card until the room is cleared...
         while !self.deck.room_clear() {
+            self.deck.print_room();
             self.process_player_turn();
         }
     }
 
     pub fn game_over(&mut self) -> bool {
-        if (self.player.health() <= 0) {
+        if self.player.health() <= 0 {
+            println!("Game over! You have fallen in battle...");
             true
         }
-        else if (self.deck.get_deck_size() == 0) {
+        else if self.deck.dungeon_cleared() {
+            println!("Game Over! You have successfully cleared the dungeon!");
             true
         }
         else {
@@ -51,14 +53,20 @@ impl GameState {
         let chosen_action: &PlayerAction = self.player_actions.get(choice-1).unwrap();
         match chosen_action {
             PlayerAction::FightMonster(val) => {
+                self.can_escape = false;
                 self.fight_monster(*val);
+                self.deck.remove_card_from_room(choice-1);
             },
             PlayerAction::DrinkPotion(val) => {
+                self.can_escape = false;
                 let amt = self.player.get_potion_heal_amount(val);
                 self.player.heal(amt);
+                self.deck.remove_card_from_room(choice-1);
             },
             PlayerAction::EquipWeapon(val) => {
+                self.can_escape = false;
                 self.player.equip(*val);
+                self.deck.remove_card_from_room(choice-1);
             },
             PlayerAction::EscapeRoom => {
                 self.escape_room();

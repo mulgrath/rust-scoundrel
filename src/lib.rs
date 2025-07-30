@@ -10,6 +10,6 @@ pub fn run_game() {
     game_state.print_player();
     println!("Game started");
     while !game_state.game_over() {
-        game_state.start_turn();
+        game_state.enter_room();
     }
 }
