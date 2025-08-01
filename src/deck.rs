@@ -53,6 +53,7 @@ impl Deck {
     /// Returns true if there are no cards in the room or in the deck.
     /// Returns false otherwise.
     pub fn dungeon_cleared(&self) -> bool {
+        //TODO: Need to account for when the last card is a potion
         self.room.len() == 0 && self.cards.len() == 0
     }
 
@@ -97,5 +98,39 @@ impl Deck {
             println!("{}", card);
         }
         println!("============");
+    }
+
+    /// When the player dies, the final score is the sum of the remaining monsters' values minus the player's health.
+    /// So loop over the remaining cards in the deck and room to get the total value of monsters.
+    pub fn get_remaining_monsters(&self) -> i32 {
+        let mut result = 0;
+
+        for card in &self.cards {
+            if card.suit() == Suit::Clubs || card.suit() == Suit::Spades {
+                result += card.rank();
+            }
+        }
+
+        for card in &self.room {
+            if card.suit() == Suit::Clubs || card.suit() == Suit::Spades {
+                result += card.rank();
+            }
+        }
+
+        result
+    }
+
+    /// If the player wins, and the final card in the room is a potion, add that value to the score
+    pub fn get_final_potion_bonus_score(&mut self) -> i32 {
+        let mut result = 0;
+
+        if self.room.len() == 1 {
+            let card = &self.room.pop().unwrap();
+            if card.suit() == Suit::Hearts {
+                result += card.rank();
+            }
+        }
+
+        result
     }
 }

@@ -6,7 +6,6 @@ use std::io::{self, Write};
 pub struct GameState {
     player: PlayerState,
     deck: Deck,
-    final_score: i32,
     player_actions: Vec<PlayerAction>,
     can_escape: bool,
     escape_cooldown: i32,
@@ -17,7 +16,7 @@ impl GameState {
         let player = PlayerState::new(20);
         let mut deck = Deck::new(4);
         deck.shuffle();
-        GameState { player, deck, final_score: 0, player_actions: vec![], can_escape: true, escape_cooldown: 0 }
+        GameState { player, deck, player_actions: vec![], can_escape: true, escape_cooldown: 0 }
     }
 
     pub fn enter_room(&mut self) {
@@ -34,10 +33,14 @@ impl GameState {
     pub fn game_over(&mut self) -> bool {
         if self.player.health() <= 0 {
             println!("Game over! You have fallen in battle...");
+            let final_score = self.player.health() - self.deck.get_remaining_monsters();
+            println!("Your final score is: {}", final_score);
             true
         }
         else if self.deck.dungeon_cleared() {
             println!("Game Over! You have successfully cleared the dungeon!");
+            let final_score = self.player.health() + self.deck.get_final_potion_bonus_score();
+            println!("Your final score is: {}", final_score);
             true
         }
         else {
