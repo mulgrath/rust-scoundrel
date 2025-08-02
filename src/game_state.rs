@@ -23,9 +23,10 @@ impl GameState {
         self.update_escape_status();
         self.deck.populate_room();
         self.player.remove_potion_cooldown();
-        // Have player choose to escape the room or select a card until the room is cleared...
+
         while !self.deck.room_clear() && self.player.health() > 0 {
             self.deck.print_room();
+            self.player.print_player();
             self.process_player_turn();
         }
     }
@@ -50,26 +51,34 @@ impl GameState {
 
     fn process_player_turn(&mut self) {
         self.get_available_actions();
-        println!("Choose your action...");
         self.print_player_choices();
-        let choice = GameState::get_player_choice("Choose your action: ", 1, self.player_actions.len());
-        let chosen_action: &PlayerAction = self.player_actions.get(choice-1).unwrap();
+        let choice = GameState::get_player_choice("Enter action number", 1, self.player_actions.len()) - 1; // Subtract 1 to account for menu items starting at 1
+        let chosen_action: &PlayerAction = self.player_actions.get(choice).unwrap();
         match chosen_action {
             PlayerAction::FightMonster(val) => {
                 self.can_escape = false;
-                self.player.attack_monster(*val);
-                self.deck.remove_card_from_room(choice-1);
+                let mut using_weapon = false;
+                if self.player.can_use_weapon(*val) {
+                    // Ask if the player wants to use their weapon or hands
+                    self.print_combat_choices();
+                    let choice = GameState::get_player_choice("Choose your weapon: ", 1, 2);
+                    if choice == 1 {
+                        using_weapon = true;
+                    }
+                }
+                self.player.attack_monster(*val, using_weapon);
+                self.deck.remove_card_from_room(choice);
             },
             PlayerAction::DrinkPotion(val) => {
                 self.can_escape = false;
-                let amt = self.player.get_potion_heal_amount(val);
+                let amt = self.player.get_potion_heal_amount(*val);
                 self.player.heal(amt);
-                self.deck.remove_card_from_room(choice-1);
+                self.deck.remove_card_from_room(choice);
             },
             PlayerAction::EquipWeapon(val) => {
                 self.can_escape = false;
                 self.player.equip(*val);
-                self.deck.remove_card_from_room(choice-1);
+                self.deck.remove_card_from_room(choice);
             },
             PlayerAction::EscapeRoom => {
                 self.escape_room();
@@ -77,21 +86,27 @@ impl GameState {
         }
     }
 
+    fn print_combat_choices(&self) {
+        println!("1. Use equipped weapon.");
+        println!("2. Fight barehanded.");
+    }
+
     fn print_player_choices(&self) {
+        println!("Choose your action...");
         for (choice_num, action) in self.player_actions.iter().enumerate() {
             match action {
                 PlayerAction::FightMonster(val) => {
-                  println!("{}. Fight Monster ({val} Combat Power)", choice_num+1);
+                  println!("\t{}. Fight Monster ({val} Combat Power)", choice_num+1);
                 },
                 PlayerAction::DrinkPotion(val) => {
-                    let amt = self.player.get_potion_heal_amount(val);
-                    println!("{}. Drink Potion (+{amt} HP)", choice_num+1)
+                    let amt = self.player.get_potion_heal_amount(*val);
+                    println!("\t{}. Drink Potion (+{amt} HP)", choice_num+1)
                 },
                 PlayerAction::EquipWeapon(val) => {
-                    println!("{}. Equip Weapon ({val} Damage)", choice_num+1)
+                    println!("\t{}. Equip Weapon ({val} Damage)", choice_num+1)
                 },
                 PlayerAction::EscapeRoom => {
-                    println!("{}. Escape room", choice_num+1);
+                    println!("\t{}. Escape room", choice_num+1);
                 }
             }
         }

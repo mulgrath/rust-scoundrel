@@ -14,7 +14,14 @@ impl PlayerState {
     }
 
     pub fn print_player(&self) {
-        println!("Health: {}, Attack: {}, Defense: {}", self.health, self.weapon_power, self.weapon_durability);
+        println!("== PLAYER ==");
+        if self.weapon_durability == i32::MAX {
+            println!("Health: {}, Weapon Power: {}, Weapon Durability: MAX", self.health, self.weapon_power);
+        }
+        else {
+            println!("Health: {}, Weapon Power: {}, Weapon Durability: {}", self.health, self.weapon_power, self.weapon_durability);
+        }
+        println!("============")
     }
 
     pub fn health(&self) -> i32 {
@@ -45,47 +52,31 @@ impl PlayerState {
         self.weapon_durability = i32::MAX;
     }
 
-    pub fn attack_monster(&mut self, monster_power: i32) {
-        let mut barehanded = false;
-        let mut can_use_weapon = false;
+    pub fn can_use_weapon(&mut self, monster_power: i32) -> bool {
+        self.weapon_durability > monster_power
+    }
 
-        // Determine if current weapon is usable
-        if self.weapon_durability > monster_power {
-            can_use_weapon = true;
-        }
-        else {
-            barehanded = true;
-        }
-
-        // Decide to fight barehanded or use a weapon (Weapon can only be used if its durability is higher than the monster's power
-        if can_use_weapon {
-            // TODO: This should be a choice. For now, always use the weapon if we can.
-            barehanded = false;
-        }
-
-        // Fight using hands or weapon
-        if barehanded {
-            self.take_damage(monster_power);
-        }
-        else {
+    pub fn attack_monster(&mut self, monster_power: i32, use_weapon: bool) {
+        if use_weapon {
             let damage_to_take = cmp::max(monster_power - self.weapon_power, 0);
             self.take_damage(damage_to_take);
             self.weapon_durability = monster_power;
         }
+        else {
+            self.take_damage(monster_power);
+        }
     }
 
-    pub fn get_potion_heal_amount(&self, val: &i32) -> i32 {
-        // Potions can only be used once per room. Any further potions are simply discarded.
+    pub fn get_potion_heal_amount(&self, val: i32) -> i32 {
+        // Potions can only be used once per room. Any further potions are useless.
         if self.potion_on_cooldown {
             0
         }
+        else if val + self.health > self.max_health {
+            self.max_health - self.health
+        }
         else {
-            let amt = *val;
-            let mut restore_amt = cmp::min(20 - (amt + self.health), amt);
-            if restore_amt <=  0 {
-                restore_amt = amt + restore_amt;
-            }
-            restore_amt
+            val
         }
     }
 }

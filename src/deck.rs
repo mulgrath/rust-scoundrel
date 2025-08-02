@@ -53,8 +53,21 @@ impl Deck {
     /// Returns true if there are no cards in the room or in the deck.
     /// Returns false otherwise.
     pub fn dungeon_cleared(&self) -> bool {
-        //TODO: Need to account for when the last card is a potion
-        self.room.len() == 0 && self.cards.len() == 0
+        if self.cards.len() == 0 {
+            // If the last card in the game is a potion, end the game so the potion is added to the player's score.
+            if self.room.len() == 1 && self.room.first().unwrap().suit() == Suit::Hearts {
+                true
+            }
+            else if self.room.len() == 0 {
+                true
+            }
+            else {
+                false
+            }
+        }
+        else {
+            false
+        }
     }
 
     pub fn remove_card_from_room(&mut self, idx: usize) {
